@@ -1,4 +1,4 @@
-## ☸️ Kubernetes
+# ☸️ Kubernetes
 **Kubernetes** (também chamado de **k8s**) é uma **plataforma open source** para **orquestração de contêineres**. Ele foi originalmente desenvolvido pelo **Google** e hoje é mantido pela **Cloud Native Computing Foundation (CNCF)**.
 
 Ele ajuda a **implantar**, **escalar** e **gerenciar aplicações em contêineres** (como os criados com Docker) de forma automática e eficiente.
@@ -7,19 +7,19 @@ Ele ajuda a **implantar**, **escalar** e **gerenciar aplicações em contêinere
    <img src="docs/arquitetura-2.png" />
 </div>
 
-### 🔧 Funcionalidade Principais
+## 🔧 Funcionalidade Principais
  1. **Orquestra contêineres:** decide onde e como os contêineres devem rodar.
  2. **Implantação automática e rollback:** gerencia a implantação e a atualização dos seus aplicativos sem downtime.
  3. **Escalabilidade automática:** aumenta ou reduz a quantidade de réplicas da aplicação conforme a carga.
  4. **Distribuição de carga:** balanceia o tráfego entre os contêineres.
  5. **Autocorreção:** substitui ou reinicia contêineres com problemas automaticamente.
  
-### 📦 Conceitos principais
+## 📦 Conceitos principais
 
 | Conceito       | Descrição                                                                 |
 |----------------|---------------------------------------------------------------------------|
 | **Pod**        | Unidade mínima no Kubernetes. Pode conter um ou mais contêineres.         |
-| **Node** ou **Worker Node**       | Um servidor (físico ou virtual) que roda os Pods.                         |
+| **Node**      | Um servidor (físico ou virtual) que roda os Pods.                         |
 | **Cluster**    | Conjunto de Nodes gerenciados pelo Kubernetes.                            |
 | **Deployment** | Controla a criação e atualização de Pods.                                 |
 | **Service**    | Define como os Pods são acessados na rede (internamente ou externamente). |
@@ -27,14 +27,14 @@ Ele ajuda a **implantar**, **escalar** e **gerenciar aplicações em contêinere
 | **Secret**     | Armazena dados sensíveis como senhas e tokens de forma segura.            |
 | **Ingress**    | Gerencia o tráfego HTTP externo para serviços internos.                   |
 
-### 🚀 Benefícios
+## 🚀 Benefícios
  - Alta disponibilidade
  - Escalabilidade horizontal
  - Infraestrutura declarativa (infra como código)
  - Portabilidade entre nuvem e on-premises
  - Automatização de tarefas complexas
 
-### 🔌 Onde o Kubernetes é usado?
+## 🔌 Onde o Kubernetes é usado?
  - Hospedagem de microserviços
  - Plataformas SaaS
  - CI/CD pipelines
@@ -58,6 +58,64 @@ O diagrama a seguir representa visualmente a arquitetura do Kubernetes:
 </div>
 
 ### 🧩 Componentes Principais
+
+| Componente                   | Descrição                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **kubectl**                  | CLI usada para interagir com o cluster Kubernetes enviando comandos para o kube-apiserver.              |
+| **Cluster**                  | Conjunto completo formado pelo control plane + nodes, onde aplicações são orquestradas pelo Kubernetes. |
+| **Namespace**                | Divide o cluster logicamente para isolar ambientes, equipes ou aplicações.                              |
+| **Control Plane**            | Camada que gerencia o cluster, toma decisões globais e garante o estado desejado do sistema.            |
+| **Node**                     | Máquina (VM ou física) onde os containers rodam; contém kubelet, kube-proxy e o container runtime.      |
+| **kube-apiserver**           | Porta de entrada do Kubernetes; expõe a API e recebe comandos do kubectl e dos outros componentes.      |
+| **kube-controller-manager**  | Conjunto de controladores que mantêm o estado desejado (ReplicationController, NodeController, etc.).   |
+| **kube-scheduler**           | Responsável por decidir **em qual node** cada Pod deve rodar com base em recursos e regras.             |
+| **cloud-controller-manager** | Integra o Kubernetes com serviços de nuvem (load balancers, volumes, IPs, etc.).                        |
+| **etcd**                     | Banco de dados distribuído chave-valor usado pelo Kubernetes para armazenar todo o estado do cluster.   |
+| **kubelet**                  | Agente que roda em cada node; garante que os containers definidos no Pod realmente estejam rodando.     |
+| **kube-proxy**               | Implementa regras de rede (iptables/IPVS) para serviços e load balancing entre Pods.                    |
+| **container-runtime**        | Software que executa containers (como containerd, CRI-O ou Docker em versões antigas).                  |
+| **Service**                  | Cria um endereço estável (IP + DNS) e faz balanceamento de carga entre Pods.                            |
+| **Pod**                      | A menor unidade executável no Kubernetes; agrupa um ou mais containers que compartilham rede e storage. |
+
+
+#### 🔶 Namespace
+O objetivo do Namespace é organizar, isolar e gerenciar recursos dentro de um mesmo cluster.
+Ele funciona como “gavetas” lógicas dentro do cluster.
+
+- **1. Isolamento lógico entre equipes, ambientes ou aplicações**
+   - Separar dev, homolog, prod dentro do mesmo cluster.
+   - Cada time pode ter seu espaço sem interferir no outro.
+
+- **2. Evitar conflitos de nomes**
+   - Dois pods, services ou deployments podem ter o mesmo nome, desde que estejam em namespaces diferentes.
+
+- **3. Aplicar políticas de segurança (RBAC) com escopo**
+
+   **Permite definir:**
+   - quem pode acessar
+   - o que pode acessar em cada namespace.
+
+   **Exemplo:** Time A só pode mexer no namespace payments.
+
+- **4. Controlar consumo de recursos (limites e quotas)**
+
+   Você pode limitar CPU, memória ou número de pods por namespace.
+
+   **Exemplo:**
+   - dev → 2 CPUs
+   - prod → 20 CPUs
+
+- **5. Organização dos recursos**
+
+   - Facilita listar, monitorar e administrar recursos agrupados.
+
+- **6. Segmentar workloads em clusters compartilhados**
+
+   - Permite vários produtos, times ou microservices rodarem no mesmo cluster sem bagunça.
+
+<div align="center">
+   <img src="docs/namespace.png" />
+</div>
 
 #### 🔶 Plano de controle (Control Plane)
 O plano de controle do Kubernetes é a camada de gerenciamento central responsável por manter o estado desejado do cluster, agendar cargas de trabalho e lidar com a automação. Ele garante que os aplicativos sejam executados conforme o esperado, monitorando continuamente as condições do cluster e fazendo os ajustes necessários.
@@ -199,6 +257,16 @@ O tempo de execução interage com o sistema operacional para isolar as cargas d
 
 <div align="center">
    <img src="docs/pod-2.png" />
+</div>
+
+- **Ciclo de Vida**
+<div align="center">
+   <img src="docs/pod-lifecycle.png" />
+</div>
+
+- **Estados do Container**
+<div align="center">
+   <img src="docs/container-states.png" />
 </div>
 
 #### 🔶 Services
@@ -368,19 +436,67 @@ Implementa o serviço de rede:
 
 ## ▶️ Comandos Essenciais
 
-```bash
-# Iniciar minikube
-minikube start -n 2 -p multinode
+### ☸️ 0. Minikube
+| Ação                            | Comando                             |
+| ------------------------------- | ----------------------------------- |
+| Iniciar minikube                | `minikube start -n 2 -p multinode`  |
+| Parar minikube                  | `minikube stop -p multinode`        |
 
-# Buscar nodes
-kubectl get nodes
+### 🔍 1. Inspeção de recursos
+| Ação                            | Comando                         |
+| ------------------------------- | ------------------------------- |
+| Listar pods                     | `kubectl get pods`              |
+| Listar pods com detalhes        | `kubectl get pods -o wide`      |
+| Listar ANY resource             | `kubectl get <resource>`        |
+| Ver YAML completo de um recurso | `kubectl get pod <pod> -o yaml` |
+| Ver alterações em tempo real    | `kubectl get pods -w`           |
 
-# Buscar pods
-kubectl get pods -A
+### 🩺 2. Debug / Diagnóstico
+| Ação                                    | Comando                              |
+| --------------------------------------- | ------------------------------------ |
+| Logs do pod                             | `kubectl logs <pod>`                 |
+| Logs de um container específico         | `kubectl logs <pod> -c <container>`  |
+| Ver logs anteriores                     | `kubectl logs <pod> --previous`      |
+| Descrever recurso (muito útil em erros) | `kubectl describe pod <pod>`         |
+| Entrar no shell do container            | `kubectl exec -it <pod> -- bash`     |
+| Testar conexão (port-forward)           | `kubectl port-forward <pod> 8080:80` |
 
-# Recursos da API-Server
-kubectl api-resources
 
-# Parar minikube
-minikube stop -p multinode
-```
+### ⚙️ 3. Manipulação de recursos
+| Ação                     | Comando                                           |
+| ------------------------ | ------------------------------------------------- |
+| Criar um recurso         | `kubectl apply -f arquivo.yaml`                   |
+| Atualizar recursos       | `kubectl apply -f arquivo.yaml`                   |
+| Deletar um pod           | `kubectl delete pod <nome>`                       |
+| Deletar qualquer recurso | `kubectl delete <resource> <name>`                |
+| Patch rápido             | `kubectl patch <resource> <name> --patch '{...}'` |
+| Editar recurso "ao vivo" | `kubectl edit <resource> <name>`                  |
+
+### 📦 4. Namespace
+| Ação                         | Comando                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| Listar namespaces            | `kubectl get ns`                                        |
+| Usar um namespace específico | `kubectl -n <namespace> get pods`                       |
+| Configurar namespace padrão  | `kubectl config set-context --current --namespace=<ns>` |
+
+### 🔧 5. Configuração / Contextos
+| Ação                       | Comando                                |
+| -------------------------- | -------------------------------------- |
+| Ver contexto atual         | `kubectl config current-context`       |
+| Listar contextos           | `kubectl config get-contexts`          |
+| Trocar de cluster/contexto | `kubectl config use-context <context>` |
+
+### 🕵️ 6. Informações gerais
+| Ação                    | Comando                 |
+| ----------------------- | ----------------------- |
+| Status do cluster       | `kubectl cluster-info`  |
+| Versão do client/server | `kubectl version`       |
+| Explorar API            | `kubectl api-resources` |
+| Listar CRDs             | `kubectl get crd`       |
+
+### 🧪 7. Testar rapidamente
+| Ação                                       | Comando                                         |
+| ------------------------------------------ | ----------------------------------------------- |
+| Criar pod de teste (curl, ping, debug)     | `kubectl run test --image=nginx -it -- sh`      |
+| Criar deployment                           | `kubectl create deployment nginx --image=nginx` |
+| Escalar pods                               | `kubectl scale deployment nginx --replicas=3`   |
