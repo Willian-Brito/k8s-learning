@@ -4,7 +4,7 @@
 Ele ajuda a **implantar**, **escalar** e **gerenciar aplicações em contêineres** (como os criados com Docker) de forma automática e eficiente.
 
 <div align="center">
-   <img src="docs/arquitetura-2.png" />
+   <img src="docs/arquitetura-3.png" />
 </div>
 
 ## 🔧 Funcionalidade Principais
@@ -405,10 +405,6 @@ Implementa o serviço de rede:
 - Regras de load balancing
 - Regras de Service → Pod
 - Usa iptables ou IPVS
-
-<div align="center">
-   <img src="docs/kube-proxy.png" />
-</div>
 
 #### ✔ CoreDNS
 - **Resolve nomes internos como:** myservice.default.svc.cluster.local
