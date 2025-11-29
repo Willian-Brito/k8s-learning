@@ -15,7 +15,7 @@ metadata:
   name: banco-de-dados
 subsets:
   - addresses:
-    - ip: 10.244.0.9
+    - ip: 10.244.1.102
     ports:
     - name: sqlserver
       port: 1433

@@ -10,7 +10,7 @@ spec:
   - image: desenvolvedorio/dominando-kubernetes:probes
     name: probes
     startupProbe:
-      # exec / httpGet / tcpPort
+      # exec / httpGet / tcpSocket
       httpGet:
         port: 80
         path: /startup

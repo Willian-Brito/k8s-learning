@@ -41,6 +41,7 @@ Ele ajuda a **implantar**, **escalar** e **gerenciar aplicações em contêinere
  - Aplicações que exigem alta disponibilidade e escalabilidade
  - Clouds
 
+---
 
 ## 🏗️ Arquitetura
 O Kubernetes é um **orquestrador de contêineres de código aberto** que simplifica o complexo processo de gerenciamento de contêineres em escala. Ele abstrai as preocupações com a infraestrutura, permitindo que os desenvolvedores se concentrem na criação de aplicativos em vez de se preocuparem com os servidores subjacentes.
@@ -114,7 +115,7 @@ Ele funciona como “gavetas” lógicas dentro do cluster.
    - Permite vários produtos, times ou microservices rodarem no mesmo cluster sem bagunça.
 
 <div align="center">
-   <img src="docs/namespace.png" />
+   <img src="docs/namespace.png" height="400" />
 </div>
 
 #### 🔶 Plano de controle (Control Plane)
@@ -200,7 +201,7 @@ O Kubernetes programa dinamicamente os pods em nós de trabalho com base na disp
 
 #### 🔶 O agente do Nó (kubelet)
 
-O Kubelet é o principal agente em nível de nó que gerencia a execução de contêineres. It:
+O Kubelet é o principal agente em nível de nó que gerencia a execução de contêineres.
 
 - Comunica-se continuamente com o API Server para receber - instruções.
 - Garante que os pods sejam executados conforme definido em suas especificações.
@@ -273,6 +274,14 @@ O tempo de execução interage com o sistema operacional para isolar as cargas d
 
 Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, funcionando como uma camada de rede fixa, mesmo quando os Pods sobem ou caem.
 
+<div align="center">
+   <img src="docs/service.png" />
+</div>
+
+<div align="center">
+   <img src="docs/endpoints.png" />
+</div>
+
 ##### 📌 Em resumo, um Service serve para:
 
 - Dar um IP fixo e um DNS estável para acessar Pods.
@@ -286,10 +295,6 @@ Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, 
 - **LoadBalancer →** cria um load balancer externo (em nuvens públicas).
 - **ExternalName →** mapeia para um DNS externo.
 
-<div align="center">
-   <img src="docs/service.png" />
-</div>
-
 #### 🔶 Como os nós de trabalho interagem com o plano de controle
 
 - Os nós entram no cluster usando um token emitido pelo plano de controle.
@@ -297,6 +302,8 @@ Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, 
 - O plano de controle monitora continuamente a integridade do nó e pode reprogramar as cargas de trabalho se um nó ficar insalubre ou sobrecarregado.
 
 Ao combinar o Kubelet, o Kube-Proxy e um tempo de execução de contêiner, os nós de trabalho formam uma camada de execução dimensionável e resiliente que alimenta os aplicativos Kubernetes.
+
+---
 
 ## 🌐 Network
 A rede no Kubernetes (K8s) segue alguns princípios fundamentais para garantir que todos os componentes, Pods, Nodes, Services possam se comunicar de forma previsível, independente de onde estão no cluster.
@@ -353,6 +360,10 @@ Existem tipos diferentes de serviços:
 - Abre uma porta em todos os nodes
 - Encaminha tráfego externo para o Service
 
+<div align="center">
+   <img src="docs/service-node-port.png" />
+</div>
+
 #### 🟥 LoadBalancer
 
 - Integrado com a nuvem (AWS, Azure, GCP etc.)
@@ -365,6 +376,10 @@ O kube-proxy cria regras usando:
 - ipvs
 
 Essas regras equilibram o tráfego entre os Pods selecionados.
+
+<div align="center">
+   <img src="docs/service-load-balancer.png" />
+</div>
 
 ### 📌 4. Comunicação com o mundo externo
 
@@ -418,6 +433,343 @@ Implementa o serviço de rede:
 - Ingress controla entrada.
 - NAT ocorre apenas na borda (entrada/saída), não entre Pods.
 
+---
+
+## ❤️‍🩹 Self-Healing 
+
+### 🕵️ Probes - Nível de Containers
+
+As probes no Kubernetes são verificações de saúde que o kubelet faz periodicamente dentro dos containers. Elas ajudam o cluster a tomar decisões automáticas sobre reiniciar containers, colocá-los ou não no tráfego e garantir que a aplicação está realmente funcionando.
+
+**Existem três tipos principais:**
+
+#### 🧪 1. Liveness Probe
+##### 📌 Para que serve
+
+- Detecta se o container está vivo e funcionando corretamente.
+- Se a probe falhar, o kubelet reinicia o container.
+
+##### 🧠 Quando usar
+
+- Sua aplicação pode travar, deadlockar ou ficar em loop infinito.
+- Há situações em que um restart limpa o problema.
+
+#### 🟢 2. Readiness Probe
+##### 📌 Para que serve
+
+- Indica se o container está pronto para receber tráfego.
+- Se falhar, o Pod continua rodando, mas:
+   - é removido do Service Endpoints
+   - não recebe requisições
+
+##### 🧠 Quando usar
+
+- Verificar dependências
+- A aplicação depende de banco de dados, filas ou cache externos.
+
+#### 🚀 3. Startup Probe
+##### 📌 Para que serve
+
+- Evita que o kubelet mate containers que demoram para iniciar.
+- Enquanto a startup probe não for bem-sucedida, liveness e readiness ficam desativadas.
+
+##### 🧠 Quando usar
+
+- Aplicações que levam muito tempo para iniciar (Spring Boot, .NET, migrações, etc.)
+- Workloads com inicialização imprevisível.
+
+#### 🔍 Tipos de Probes (formas de checagem)
+
+As probes podem ser feitas de 3 maneiras:
+
+##### ✔️ HTTP
+
+Kubernetes faz um GET e espera um código 2xx ou 3xx.
+
+```yaml
+httpGet:
+  path: /health
+  port: 8080
+```
+
+##### ✔️ TCP
+
+Kubernetes tenta abrir uma conexão TCP.
+
+```yaml
+tcpSocket:
+  port: 8080
+```
+
+##### ✔️ Exec
+
+Executa um comando dentro do container.
+
+```yaml
+exec:
+  command: ["pg_isready", "-U", "postgres"]
+```
+
+#### 📊 Parâmetros importantes
+| Parâmetro             | Significado                                 |
+| --------------------- | ------------------------------------------- |
+| `initialDelaySeconds` | Espera antes da primeira checagem           |
+| `periodSeconds`       | Intervalo entre checagens                   |
+| `timeoutSeconds`      | Timeout da checagem                         |
+| `failureThreshold`    | Quantos erros antes de considerar falha     |
+| `successThreshold`    | Quantos sucessos para considerar recuperado |
+
+#### 🎯 Resumo Final
+
+- Liveness → reinicia containers travados, **utilizado para verificar o próprio serviço**
+- Readiness → controla entrada de tráfego, **utilizado para verificar o serviços dependententes**
+- Startup → protege aplicações com startup lenta, **utilizado para aplicações que demoram para iniciar**
+- HTTP/TCP/Exec → mecanismos de teste
+- Parametrização fina → evita falsos positivos e interrupções
+
+### 🔁 ReplicationControler - Nivel de Pod
+
+O ReplicationController (RC) é um dos primeiros mecanismos de replicação e alta disponibilidade do Kubernetes. Ele garante que sempre exista um número desejado de Pods rodando, recriando Pods que falham, são deletados ou morrem por qualquer motivo.
+
+Embora hoje ele tenha sido substituído na prática pelo ReplicaSet e Deployment, ainda é importante entender seu funcionamento.
+
+**1. POD A Funcionando**
+<div align="center">
+   <img src="docs/replication-controller.png" height="400"/>
+</div>
+
+**2. POD A Parou de funcionar**
+<div align="center">
+   <img src="docs/replication-controller-2.png" height="400" />
+</div>
+
+**3. RC replica para outro Node**
+<div align="center">
+   <img src="docs/replication-controller-3.png" height="400" />
+</div>
+
+#### 🔧 O que é o Replication Controller
+
+O **ReplicationController** é um objeto do Kubernetes que:
+
+1. Mantém um número fixo de réplicas de um Pod.
+2. Cria novos Pods quando o número atual é menor que o desejado.
+3. Remove Pods excedentes se houver mais do que o especificado.
+4. Faz self-healing quando Pods são deletados ou morrem.
+
+#### ⚙️ Como ele funciona
+
+Ele monitora continuamente dois estados:
+- Estado desejado: definido no spec (replicas, template, selector)
+- Estado atual: quantos Pods existem realmente
+
+Se houver diferença, o RC ajusta automaticamente:
+| Situação                  | Ação do RC      |
+| ------------------------- | --------------- |
+| Número de Pods < desejado | cria novos Pods |
+| Número de Pods > desejado | deleta Pods     |
+| Pod falhou                | cria novo Pod   |
+| Pod deletado              | recria          |
+
+#### 🧱 Estrutura básica de um Replication Controller
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  selector:
+    app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: app
+        image: nginx
+```
+
+**Campos importantes:**
+- replicas → quantidade desejada
+- selector → regras que definem quais Pods o RC controla
+- template → o “molde” para criar novos Pods
+
+#### 🆚 Replication Controller vs ReplicaSet
+
+Embora ambos façam praticamente a mesma coisa, há diferenças importantes:
+
+##### ✔️ ReplicaSet (RS)
+
+- é a versão mais moderna
+- usa selectors mais avançados (matchExpressions)
+- é a base do Deployment
+
+##### ✔️ Replication Controller (RC)
+
+- mais antigo (legado)
+- usa apenas selectors simples (matchLabels)
+- não suporta rollouts e rollbacks nativamente
+
+Por isso, **na prática quase ninguém usa RC hoje**.
+
+**O fluxo moderno é:**
+
+👉 Deployment → ReplicaSet → Pods
+
+### 📈 DeamonSet
+O **DaemonSet** é um tipo de **controller** que garante que uma **cópia de um Pod seja executada em todos ou em um subconjunto de nós** do cluster.
+
+<div align="center">
+   <img src="docs/deamon-set.png" />
+</div>
+
+#### 🔷 Quando usar o DaemonSet?
+
+Ele é útil quando você precisa garantir que um Pod seja executado em todos os nós ou em um conjunto específico de nós. Alguns exemplos de uso incluem:
+
+- **Monitoramento:** DaemonSets são frequentemente usados para rodar agentes de monitoramento (ex: Prometheus, Fluentd, Elastic Agent) em todos os nós.
+- **Log Aggregation:** Implementar agentes de coleta de logs (ex: fluentd, logstash) que precisam rodar em cada nó do cluster.
+- **Networking:** Para implementar soluções de rede, como CNI (Container Network Interface).
+Storage: Para rodar agentes que gerenciam volumes distribuídos, como Ceph ou GlusterFS.
+
+#### 🔷  Características principais do DaemonSet
+
+- **Escalabilidade automática:** Quando você adiciona um novo nó ao cluster, o DaemonSet cria automaticamente um Pod nesse nó.
+-- **Controle de afinidade de nó:** Você pode especificar que o DaemonSet deve rodar apenas em nós específicos (ex: apenas em nós com uma determinada label).
+- **Rolling Updates:** O DaemonSet suporta atualizações contínuas (rolling updates) para garantir que seus Pods sejam atualizados sem causar downtime.
+
+#### 🔷 Diferença entre DaemonSet e ReplicaSet
+
+- DaemonSet garante que um **Pod por nó** seja executado.
+- ReplicaSet garante que **um número fixo de Pods** esteja disponível, mas sem a preocupação de em quais nós eles serão executados.
+
+#### 🎯 Resumo
+
+- **DaemonSet** é utilizado para garantir que um Pod seja executado em todos os nós ou subconjunto de nós do cluster.
+- É comum em cenários como **monitoramento**, **log aggregation**, **networking**, e **storage**.
+- Ele cuida da criação e exclusão de Pods automaticamente conforme nós são adicionados ou removidos.
+
+### ⏳ Jobs
+
+**Job** é um tipo de recurso usado para executar tarefas pontuais, diferente de Deployments, que mantêm pods rodando continuamente.
+Um **Job garante que uma ou mais execuções de um Pod** sejam concluídas com sucesso, respeitando critérios configuráveis.
+
+A seguir, um resumo claro e completo:
+
+#### ✅ O que é um Job no Kubernetes?
+
+Um **Job** cria Pods para realizar uma tarefa que termina (não é contínua).
+Ele monitora esses pods e garante que um número especificado de execuções termine com sucesso.
+
+**É ideal para:**
+- Importação de dados
+- Exportação de dados
+- Processamentos batch
+- Execuções únicas
+- Migrações de banco
+- Envio de e-mails em lote
+- Scripts de manutenção
+- Geração de relatórios
+
+#### 🧩 Como funciona
+
+**Quando você cria um Job:**
+
+1. O Kubernetes cria um Pod (ou vários).
+1. Ele roda até sair com código 0 (sucesso).
+1. Se falhar, o Job pode recriar o Pod dependendo da política de restart.
+1. Quando o número de execuções bem-sucedidas iguala o esperado, o Job termina.
+
+#### 🔄 Tipos de Jobs
+🗘 **1. Job simples (execução única)**
+
+Roda um pod até terminar com sucesso.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: exemplo-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: hello
+          image: busybox
+          command: ["echo", "Hello Job!"]
+      restartPolicy: Never
+```
+
+🗘 **2. Job com paralelismo (batch paralelo)**
+
+Executa várias tarefas simultaneamente.
+
+Parâmetros importantes:
+
+- **parallelism:** quantos pods rodam ao mesmo tempo
+- **completions:** quantas execuções totais são necessárias
+
+```yaml
+spec:
+  parallelism: 3
+  completions: 10
+```
+
+**Isso significa:**
+- 3 pods ao mesmo tempo
+- até completar 10 execuções bem-sucedidas
+
+🗘 **3. CronJob (agendado)**
+
+É como um cron Linux, roda Jobs em horários definidos.
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: exemplo-cron
+spec:
+  schedule: "0 * * * *" # a cada 1h
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: task
+              image: busybox
+              command: ["echo", "Executando tarefa agendada"]
+          restartPolicy: Never
+```
+
+#### 🔐 Políticas importantes
+🔹 **restartPolicy**
+
+Para Jobs, geralmente:
+
+- `Never`
+- `OnFailure`
+
+🔹 **backoffLimit**
+
+Quantas vezes o K8s tenta recriar o pod antes de declarar falha.
+
+```yaml
+spec:
+  backoffLimit: 4
+```
+
+🔹 **activeDeadlineSeconds**
+
+Tempo máximo permitido para a conclusão.
+
+🔹 **ttlSecondsAfterFinished**
+
+Apaga Jobs automaticamente após finalizados.
+
+---
+
 ## 🌩️ Principais provedores e suas implementações Kubernetes
 | Provedor                        | Nome do Serviço Kubernetes                     | Sigla     |
 | ------------------------------- | ---------------------------------------------- | --------- |
@@ -429,6 +781,8 @@ Implementa o serviço de rede:
 | **Alibaba Cloud**               | Alibaba Cloud Container Service for Kubernetes | **ACK**   |
 | **DigitalOcean**                | DigitalOcean Kubernetes                        | **DOKS**  |
 | **Linode (Akamai Cloud)**       | Linode Kubernetes Engine                       | **LKE**   |
+
+---
 
 ## ▶️ Comandos Essenciais
 

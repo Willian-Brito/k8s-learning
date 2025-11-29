@@ -3,17 +3,17 @@ kind: Job
 metadata:
   name: job-demo
 spec:
-  completions: 1
+  completions: 5
   backoffLimit: 3
-  parallelism: 1
+  parallelism: 3
   # activeDeadlineSeconds: 70
-  # suspend: false
-  ttlSecondsAfterFinished: 100
+  # suspend: false  
+  ttlSecondsAfterFinished: 10
   template:
     metadata:
       name: job-demo
     spec:
       containers:
       - name: job-demo
-        image: desenvolvedorio/dominando-kubernetes:pod-lifecycle-failed
+        image: desenvolvedorio/dominando-kubernetes:pod-lifecycle-succeeded
       restartPolicy: OnFailure
