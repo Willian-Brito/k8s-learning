@@ -279,7 +279,7 @@ Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, 
 </div>
 
 <div align="center">
-   <img src="docs/endpoints.png" />
+   <img src="docs/endpoints.png" height="507" />
 </div>
 
 ##### 📌 Em resumo, um Service serve para:
