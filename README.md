@@ -64,7 +64,6 @@ O diagrama a seguir representa visualmente a arquitetura do Kubernetes:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **kubectl**                  | CLI usada para interagir com o cluster Kubernetes enviando comandos para o kube-apiserver.              |
 | **Cluster**                  | Conjunto completo formado pelo control plane + nodes, onde aplicações são orquestradas pelo Kubernetes. |
-| **Namespace**                | Divide o cluster logicamente para isolar ambientes, equipes ou aplicações.                              |
 | **Control Plane**            | Camada que gerencia o cluster, toma decisões globais e garante o estado desejado do sistema.            |
 | **Node**                     | Máquina (VM ou física) onde os containers rodam; contém kubelet, kube-proxy e o container runtime.      |
 | **kube-apiserver**           | Porta de entrada do Kubernetes; expõe a API e recebe comandos do kubectl e dos outros componentes.      |
@@ -78,45 +77,19 @@ O diagrama a seguir representa visualmente a arquitetura do Kubernetes:
 | **Service**                  | Cria um endereço estável (IP + DNS) e faz balanceamento de carga entre Pods.                            |
 | **Pod**                      | A menor unidade executável no Kubernetes; agrupa um ou mais containers que compartilham rede e storage. |
 
+### 🔗 Componentes adicionais importantes
 
-#### 🔶 Namespace
-O objetivo do Namespace é organizar, isolar e gerenciar recursos dentro de um mesmo cluster.
-Ele funciona como “gavetas” lógicas dentro do cluster.
-
-- **1. Isolamento lógico entre equipes, ambientes ou aplicações**
-   - Separar dev, homolog, prod dentro do mesmo cluster.
-   - Cada time pode ter seu espaço sem interferir no outro.
-
-- **2. Evitar conflitos de nomes**
-   - Dois pods, services ou deployments podem ter o mesmo nome, desde que estejam em namespaces diferentes.
-
-- **3. Aplicar políticas de segurança (RBAC) com escopo**
-
-   **Permite definir:**
-   - quem pode acessar
-   - o que pode acessar em cada namespace.
-
-   **Exemplo:** Time A só pode mexer no namespace payments.
-
-- **4. Controlar consumo de recursos (limites e quotas)**
-
-   Você pode limitar CPU, memória ou número de pods por namespace.
-
-   **Exemplo:**
-   - dev → 2 CPUs
-   - prod → 20 CPUs
-
-- **5. Organização dos recursos**
-
-   - Facilita listar, monitorar e administrar recursos agrupados.
-
-- **6. Segmentar workloads em clusters compartilhados**
-
-   - Permite vários produtos, times ou microservices rodarem no mesmo cluster sem bagunça.
-
-<div align="center">
-   <img src="docs/namespace.png" height="400" />
-</div>
+| Componente            | Descrição                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| **Deployment**        | Controlador para gerenciar aplicações stateless; controla réplicas, rollout e rollback.      |
+| **StatefulSet**       | Controlador para aplicações stateful que precisam de identidade fixa e volumes persistentes. |
+| **DaemonSet**         | Garante que um Pod rode em **todos os nodes** (ex.: agentes de monitoramento).               |
+| **ReplicaSet**        | Mantém quantidade fixa de Pods rodando; usado internamente pelo Deployment.                  |
+| **Namespace**         | Divide o cluster logicamente para isolar ambientes, equipes ou aplicações.                   |
+| **ConfigMap**         | Armazena configurações não sensíveis para aplicações.                                        |
+| **Secret**            | Armazena dados sensíveis como senhas e chaves, em base64.                                    |
+| **Ingress**           | Expõe aplicações HTTP/HTTPS externamente via regras de roteamento.                           |
+| **Volume / PVC / PV** | Infraestrutura de armazenamento para persistência de dados.                                  |
 
 #### 🔶 Plano de controle (Control Plane)
 O plano de controle do Kubernetes é a camada de gerenciamento central responsável por manter o estado desejado do cluster, agendar cargas de trabalho e lidar com a automação. Ele garante que os aplicativos sejam executados conforme o esperado, monitorando continuamente as condições do cluster e fazendo os ajustes necessários.
@@ -270,6 +243,45 @@ O tempo de execução interage com o sistema operacional para isolar as cargas d
    <img src="docs/container-states.png" />
 </div>
 
+#### 🔶 Namespace
+O objetivo do Namespace é organizar, isolar e gerenciar recursos dentro de um mesmo cluster.
+Ele funciona como “gavetas” lógicas dentro do cluster.
+
+- **1. Isolamento lógico entre equipes, ambientes ou aplicações**
+   - Separar dev, homolog, prod dentro do mesmo cluster.
+   - Cada time pode ter seu espaço sem interferir no outro.
+
+- **2. Evitar conflitos de nomes**
+   - Dois pods, services ou deployments podem ter o mesmo nome, desde que estejam em namespaces diferentes.
+
+- **3. Aplicar políticas de segurança (RBAC) com escopo**
+
+   **Permite definir:**
+   - quem pode acessar
+   - o que pode acessar em cada namespace.
+
+   **Exemplo:** Time A só pode mexer no namespace payments.
+
+- **4. Controlar consumo de recursos (limites e quotas)**
+
+   Você pode limitar CPU, memória ou número de pods por namespace.
+
+   **Exemplo:**
+   - dev → 2 CPUs
+   - prod → 20 CPUs
+
+- **5. Organização dos recursos**
+
+   - Facilita listar, monitorar e administrar recursos agrupados.
+
+- **6. Segmentar workloads em clusters compartilhados**
+
+   - Permite vários produtos, times ou microservices rodarem no mesmo cluster sem bagunça.
+
+<div align="center">
+   <img src="docs/namespace.png" height="400" />
+</div>
+
 #### 🔶 Services
 
 Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, funcionando como uma camada de rede fixa, mesmo quando os Pods sobem ou caem.
@@ -302,6 +314,158 @@ Um Service é um objeto que expõe e estabiliza o acesso a um conjunto de Pods, 
 - O plano de controle monitora continuamente a integridade do nó e pode reprogramar as cargas de trabalho se um nó ficar insalubre ou sobrecarregado.
 
 Ao combinar o Kubelet, o Kube-Proxy e um tempo de execução de contêiner, os nós de trabalho formam uma camada de execução dimensionável e resiliente que alimenta os aplicativos Kubernetes.
+
+### 🖧 Ingress
+
+O **Ingress** é um recurso que controla como o tráfego externo (HTTP/HTTPS) chega aos serviços dentro do cluster. Ele funciona como uma camada de roteamento, atuando como um gateway de entrada mais inteligente e flexível do que um simples `NodePort` ou `LoadBalancer`.
+
+<div align="center">
+   <img src="docs/ingress.png" />
+</div>
+
+#### 🛣️ O que é o Ingress?
+
+**O Ingress é:**
+
+- Um objeto de configuração com regras de roteamento.
+- Associado a um Ingress Controller (como NGINX, Traefik, Istio Gateway).
+- Usado para expor serviços HTTP/HTTPS dentro do cluster para o mundo externo.
+
+**Ele permite:**
+
+- Roteamento por URL (path-based)
+- Roteamento por domínio (host-based)
+- TLS/HTTPS com certificados
+- Balanceamento de carga
+- Reescrita de paths
+- Rate limiting, auth, caching (dependendo do controller)
+
+#### 🔁 Como funciona o fluxo
+
+```css
+[Cliente] -> [Load Balancer / NodePort] -> [Ingress Controller] -> [Service] -> [Pod]
+```
+
+1. O usuário acessa um domínio (ex: api.meusite.com).
+1. Esse tráfego chega ao Ingress Controller.
+1. O controller consulta as regras do Ingress.
+1. Roteia para o Service correto.
+1. O Service envia para os pods.
+
+#### 📝 Exemplo básico de Ingress
+
+##### ✔ Roteando domínio para um serviço
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: meu-ingress
+spec:
+  rules:
+  - host: api.meusite.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: meu-service
+            port:
+              number: 80
+```
+
+##### ➗ Roteamento por path
+
+Exemplo com APIs diferentes:
+
+```yaml
+rules:
+- host: app.meu.com
+  http:
+    paths:
+    - path: /api
+      pathType: Prefix
+      backend:
+        service:
+          name: api-service
+          port:
+            number: 80
+    - path: /web
+      pathType: Prefix
+      backend:
+        service:
+          name: web-service
+          port:
+            number: 80
+```
+
+##### 🔐 HTTPS com TLS
+
+Ingress com certificado TLS:
+
+```yaml
+spec:
+  tls:
+  - hosts:
+    - app.meu.com
+    secretName: certificado-tls
+  rules:
+  - host: app.meu.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 80
+```
+O certificado precisa estar em um **Secret do tipo tls**.
+
+#### 🆚 Ingress vs LoadBalancer vs NodePort
+
+**NodePort**
+- expõe um serviço via porta de cada nó
+- simples e limitado
+- não suporta múltiplos domínios/paths
+
+**LoadBalancer**
+- cria um load balancer externo (cloud)
+- caro se tiver muitos serviços
+- apenas 1 serviço por LB
+
+**Ingress ⭐**
+
+- 1 load balancer → múltiplos serviços
+- suporte a múltiplos hosts
+- roteamento avançado
+- TLS centralizado
+
+Ingress é a solução correta para aplicações web.
+
+#### 🧠 Quando usar Ingress?
+
+✔ Você tem vários serviços HTTP/HTTPS
+
+✔ Quer expor APIs com diferentes domínios ou paths
+
+✔ Precisa de HTTPS/TLS
+
+✔ Quer economizar usando 1 LoadBalancer só
+
+✔ Precisa de roteamento avançado
+
+#### ⚠ Quando não usar Ingress
+
+✖ Serviços TCP/UDP (a não ser que o controller suporte)
+
+✖ Aplicações que não falam HTTP/HTTPS
+
+✖ Cenários ultra simples (usando apenas NodePort)
+
+✖ Quando seu service é interno (use ClusterIP)
 
 ---
 

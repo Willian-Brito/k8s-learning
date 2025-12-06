@@ -29,7 +29,7 @@ spec:
         command:
         - git
         - clone
-        - https://github.com/brunobritodev/kubernetes-site.git
+        - https://github.com/Willian-Brito/willian-brito.github.io.git
         - /kubernetes-site
         volumeMounts:
         - name: html
