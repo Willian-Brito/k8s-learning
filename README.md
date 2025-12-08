@@ -457,7 +457,7 @@ Ingress é a solução correta para aplicações web.
 
 ✔ Precisa de roteamento avançado
 
-#### ⚠ Quando não usar Ingress
+#### ⚠️ Quando não usar Ingress
 
 ✖ Serviços TCP/UDP (a não ser que o controller suporte)
 
@@ -466,6 +466,138 @@ Ingress é a solução correta para aplicações web.
 ✖ Cenários ultra simples (usando apenas NodePort)
 
 ✖ Quando seu service é interno (use ClusterIP)
+
+---
+
+## 🚀 Deployment
+Um **Deployment** é um dos recursos mais importantes e usados para rodar aplicações de forma estável, escalável e com atualizações controladas. Ele é a “forma moderna” de gerenciar Pods e ReplicaSets dentro do cluster.
+
+<div align="center">
+   <img src="docs/deployment.png" />
+</div>
+
+### 🚩 O que é um Deployment?
+
+O Deployment é um recurso que gerencia Pods e ReplicaSets, garantindo que sua aplicação esteja:
+
+- Sempre rodando
+- Com o número desejado de réplicas
+- Atualizável sem downtime (rolling update)
+- Recuperável em caso de falhas
+
+Ele cria e controla automaticamente um ReplicaSet, que por sua vez garante que os Pods corretos estejam rodando.
+
+### ⚙️ Como funciona o Deployment
+
+**Fluxo básico:**
+- O Deployment sempre mantém o estado desejado.
+- Se um Pod cair → o ReplicaSet recria.
+- Se você atualizar a versão da imagem → o Deployment cria um novo ReplicaSet e remove o antigo.
+
+```css
+[Deployment] -> [ReplicaSet] -> [Pods]
+```
+
+### 📝 Exemplo simples de Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+        - name: webapp
+          image: nginx:1.25
+          ports:
+            - containerPort: 80
+```
+**Esse Deployment garante:**
+
+- 3 réplicas do nginx rodando
+- auto-recriação em caso de falha
+- possibilidade de atualizar a imagem facilmente
+
+### 🔁 Atualizações (rolling updates)
+
+O Deployment permite atualizar versões de forma segura:
+
+```bash
+kubectl set image deployment/webapp webapp=nginx:1.26
+```
+
+Ou alterando o YAML:
+```yaml
+image: nginx:1.26
+```
+Ele realiza:
+
+- criação gradual de novos Pods
+- remoção gradual de Pods antigos
+- sem downtime
+
+Estratégia de atualização padrão:
+```yaml
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+```
+
+### ↩ Rollback automático
+O Kubernetes mantém histórico das versões aplicadas.
+
+Voltar para a versão anterior:
+```bash
+kubectl rollout undo deployment/webapp
+```
+
+Ver histórico:
+```bash
+kubectl rollout history deployment/webapp
+```
+
+### 📦 Atributos importantes no Deployment
+`replicas`
+- Quantos Pods você quer rodando.
+
+`selector`
+- Como o Deployment identifica quais Pods pertencem a ele.
+- ⚠ Nunca altere o selector depois que o Deployment existir.
+
+`template`
+- Modelo do Pod que será criado.
+
+`strategy`
+- Tipo de atualização: `RollingUpdate` ou `Recreate`.
+
+`revisionHistoryLimit`
+- Quantas versões antigas manter.
+
+### 📈 Autoscaling
+O Deployment pode ser escalado manualmente:
+```bash
+kubectl scale deployment webapp --replicas=5
+```
+
+Ou automaticamente via HPA:
+```bash
+kubectl autoscale deployment webapp --min=2 --max=10 --cpu-percent=80
+```
+
+<div align="center">
+   <img src="docs/hpa.png" />
+</div>
 
 ---
 

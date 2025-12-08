@@ -1,0 +1,1 @@
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 1;do wget -q -O- http://hpa-load-test-service/cpu; echo ''; done"
