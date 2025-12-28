@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Adicionar entrada no arquivo hosts para o domínio devstore.info
+# Adicionar entrada no arquivo hosts para o domínio status.devstore.info
 sudo nano /etc/hosts
 192.168.58.2 status.devstore.info
 
